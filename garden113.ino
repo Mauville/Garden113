@@ -1,3 +1,10 @@
+/***
+  This sketch works by setting flags at the appropiate times.
+  On every loop, the arduino will check if the flags are on, and send output to the pins if they are.
+  The flags are usually toggled using the TimeAlarm function, but manual override is possible.
+  The arduino will listen on serial for specific codes (see Comms.ino/handleMessage), that trigger the flags.
+
+  ***/
 #include <Time.h>
 #include <TimeAlarms.h>
 
@@ -8,32 +15,30 @@
 #define BLINKSPEED_SLOW 500
 #define BLINKSPEED_STEADY 1000
 
+#define LIGHTPIN 2
+#define WATERPIN 10
+
 // Incoming serial message
-String message;
 bool lights = false;
 bool water = false;
 bool manual = false;
 
 void setup() {
   Serial.begin(9600);
-  // Flash onboard LED
+  // setup flashing onboard LED
   pinMode(LED_BUILTIN, OUTPUT);
-  setTime(0,00,00,1,1,22); // set time to Saturday 8:29:00am Jan 1 2011
-  // set water on alarms
-  Alarm.alarmRepeat(dowMonday,8,30,00,turnOnWater);  // 8:30:30 every Saturday 
-  Alarm.alarmRepeat(dowThursday,8,30,00,turnOnWater);  // 8:30:30 every Saturday 
-  Alarm.alarmRepeat(dowSaturday,8,30,00,turnOnWater);  // 8:30:30 every Saturday 
-  // set water off alarms
-  Alarm.alarmRepeat(dowMonday,8,30 + WATER_INTERVAL,00,turnOffWater);  // 8:30:30 every Saturday 
-  Alarm.alarmRepeat(dowThursday,8,30 + WATER_INTERVAL,00,turnOffWater);  // 8:30:30 every Saturday 
-  Alarm.alarmRepeat(dowSaturday,8,30 + WATER_INTERVAL,00,turnOffWater);  // 8:30:30 every Saturday 
-  // set light alarm
-  Alarm.alarmRepeat(18,00,0, turnOnLights);  // 8:30am every day
-  Alarm.alarmRepeat(01,00,0, turnOffLights);  // 1:00am every day
+  // pin d2 for lights
+  pinMode(LIGHTPIN, OUTPUT);
+  // pin d10 for water
+  pinMode(WATERPIN, OUTPUT);
+  setTime(0,00,00,1,1,22);
+  // set alarms to turn flags on and off
+  setAlarms();
 }
 
 void loop() {
   // Print Status line
+  Alarm.delay(1);
   blink(SLOW);
   printStatus();
   if (!manual) {
@@ -41,71 +46,6 @@ void loop() {
   }
 }
 
-// This procedure gets called every time something is received on Serial
-void serialEvent() {
-  // Read and echo back messages
-  message = "";
-  message = Serial.readString();
-  // Handle COMMANDs
-  if (message.startsWith("COMMAND:")) {
-    message = message.substring(8);
-    Serial.println("ACK:" + message);
-    /* blink(STEADY); */
-    // Pass sliced string
-    handleCommand(message);
-    Serial.println("RESPONSE:1");
-  } else if (message.startsWith("ECHO:")){
-    Serial.println("ECHO: " + message + " from Arduino!");
-    /* blink(STEADY); */
-  } else if (message.startsWith("STATUS")){
-    printStatus();
-    /* blink(SLOW); */
-  }
-}
-
-bool handleCommand(String command) {
-  // parse a response of the shape MANUAL LIGHTS WATER.
-  // This response will be:
-  // 0  turn off
-  debugPrint("Received " + command);
-  String a = String(command.charAt(0));
-  String l = String(command.charAt(1));
-  String w = String(command.charAt(2));
-  if (manual) {
-    // Turn auto back on.
-    if (a.equals("0")){
-      manual = false;
-      turnOffLights();
-      turnOffWater();
-      return true;
-    }
-    debugPrint("Executing manual commands");
-    if (l.equals("1")) {
-      turnOnLights();
-    }
-    if (l.equals("0")) {
-      turnOffLights();
-    }
-    if (w.equals("1")) {
-      turnOnWater();
-    }
-    if (w.equals("0")) {
-      turnOffWater();
-    }
-  } else {
-    // Ignore every command on auto except turning to manual.
-    if (a.equals("1")) {
-      debugPrint("Manual Turned ON");
-      manual = true;
-      return handleCommand(command);
-    }
-  }
-}
-
-void debugPrint(String s) {
-  if (DEBUG)
-    Serial.println("DEBUG: " + s);
-}
 
 void turnOnLights() {
   debugPrint("Turned Lights ON");
@@ -126,32 +66,20 @@ void turnOffWater() {
 
 
 bool autoRoutine() {
-  return false;
-  // in here go auto things
   // This is a function checked on every second.
   // Since we don't have threads, this function needs to execute for as short as possible to avoid locking up the program
-  // perhaps only ifs that turn on and off when time is inside a range
-  // lights on 1 hour from sunset
-  // 19:08:27 on 03
-  // 19:17:06 on 04
-  // 19:28:41 on 05
-  // 19:40:48 on 06
-  // 19:26:30 on 08
-  // lights on 10 minutes every 20 minutes for 4 hours
+  if(lights){
+    digitalWrite(LIGHTPIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+  }
+  else{
+    digitalWrite(LIGHTPIN, LOW);  // turn the LED on (HIGH is the voltage level)
+  }
 
-  // water on every three (?) days at 8am
-}
-void printStatus() {
-  Serial.print("STATUS:");
-  Serial.print(String(manual));
-  Serial.print(String(lights));
-  Serial.print(String(water));
-  Serial.println();
-}
-void blink(int speed) {
-  (speed == SLOW) ? speed = BLINKSPEED_SLOW : speed = BLINKSPEED_STEADY;
-  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  delay(speed);                     // wait for a second
-  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
-  delay(speed);
+  if(water){
+    digitalWrite(WATERPIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+  }
+  else{
+    digitalWrite(WATERPIN, LOW);  // turn the LED on (HIGH is the voltage level)
+  }
+  return false;
 }
