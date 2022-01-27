@@ -8,42 +8,96 @@
 #include <Time.h>
 #include <TimeAlarms.h>
 
-#define DEBUG false
-#define WATER_INTERVAL 5 // in minutes (max 29)
+#define DEBUG true
+
 #define SLOW 0
 #define STEADY 1
 #define BLINKSPEED_SLOW 500
 #define BLINKSPEED_STEADY 1000
+#define TIMESYNC_INTERVAL 5 // in minutes TODO RESET TO 1
 
 #define LIGHTPIN 2
 #define WATERPIN 10
+
+/* #define WATERHOUR 8 */
+/* #define WATERMINUTE 30 */
+/* #define LIGHTONHOUR 18 */
+/* #define LIGHTONMINUTE 30 */
+/* #define LIGHTOFFHOUR 1 */
+/* #define LIGHTOFFMINUTE 00 */
+
+#define WATERHOUR 0
+#define WATERMINUTE 0
+/* #define WATER_INTERVAL 5  // in minutes (max 29) */
+#define WATER_INTERVAL 1  // in minutes (max 29)
+
+#define LIGHTONHOUR 0
+#define LIGHTONMINUTE 0
+#define LIGHTOFFHOUR 0
+#define LIGHTOFFMINUTE 1
+#define PHOTOPERIODIC_HOURS 5
 
 // Incoming serial message
 bool lights = false;
 bool water = false;
 bool manual = false;
 
+void printStatus() {
+  Serial.print("STATUS:");
+  Serial.print(String(manual));
+  Serial.print(String(lights));
+  Serial.print(String(water));
+  if(DEBUG){
+    Serial.print("|");
+    Serial.print(String(year()));
+    Serial.print(":");
+    Serial.print(String(month()));
+    Serial.print(":");
+    Serial.print(String(day()) + "." +String(weekday()));
+    Serial.print(":");
+    Serial.print(String(hour()));
+    Serial.print(":");
+    Serial.print(String(minute()));
+    Serial.print(":");
+    Serial.print(String(second()));
+  }
+  if (timeStatus() != timeSet){
+    Serial.print("|");
+    Serial.print("TIMError:" + timeStatus());
+  }
+  Serial.println();
+
+}
+void blink(int speed) {
+  (speed == SLOW) ? speed = BLINKSPEED_SLOW : speed = BLINKSPEED_STEADY;
+  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+  Alarm.delay(speed);                     // wait for a second
+  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
+  Alarm.delay(speed);
+}
+void debugPrint(String s) {
+  if (DEBUG)
+    Serial.println("DEBUG: " + s);
+}
+
+
 void setup() {
   Serial.begin(9600);
   // setup flashing onboard LED
   pinMode(LED_BUILTIN, OUTPUT);
-  // pin d2 for lights
   pinMode(LIGHTPIN, OUTPUT);
-  // pin d10 for water
   pinMode(WATERPIN, OUTPUT);
-  setTime(0,00,00,1,1,22);
   // set alarms to turn flags on and off
+  beginTime();
   setAlarms();
 }
 
 void loop() {
   // Print Status line
-  Alarm.delay(1);
-  blink(SLOW);
+  Alarm.delay(1000);
   printStatus();
-  if (!manual) {
-    autoRoutine();
-  }
+  autoRoutine();
+  /* blink(SLOW); */
 }
 
 
@@ -67,18 +121,17 @@ void turnOffWater() {
 
 bool autoRoutine() {
   // This is a function checked on every second.
-  // Since we don't have threads, this function needs to execute for as short as possible to avoid locking up the program
-  if(lights){
+  // It'll just turn on/off pins according to state. Other functions modify state.
+
+  if (lights) {
     digitalWrite(LIGHTPIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  }
-  else{
+  } else {
     digitalWrite(LIGHTPIN, LOW);  // turn the LED on (HIGH is the voltage level)
   }
 
-  if(water){
+  if (water) {
     digitalWrite(WATERPIN, HIGH);  // turn the LED on (HIGH is the voltage level)
-  }
-  else{
+  } else {
     digitalWrite(WATERPIN, LOW);  // turn the LED on (HIGH is the voltage level)
   }
   return false;
