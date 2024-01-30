@@ -1,0 +1,3 @@
+C:/Users/X220/Desktop/garden113/cmake-build-debug/CMakeFiles/garden113.dir
+C:/Users/X220/Desktop/garden113/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/X220/Desktop/garden113/cmake-build-debug/CMakeFiles/rebuild_cache.dir

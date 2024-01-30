@@ -1,3 +1,5 @@
+// There's a hard number on how many alarms can be set at the same time.
+// Set it on TimeAlarms.h
 int halfHoursLeft = PHOTOPERIODIC_HOURS*2;
 
 void setAlarms() {
@@ -12,22 +14,22 @@ void setAlarms() {
   // water on every three (?) days at 8am
 
   // set water on alarms
-  Alarm.alarmRepeat(dowMonday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);    // 8:30:30 every Saturday
-  Alarm.alarmRepeat(dowThursday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);  // 8:30:30 every Saturday
-  Alarm.alarmRepeat(dowSaturday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);  // 8:30:30 every Saturday
+  //Alarm.alarmRepeat(dowMonday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);    // 8:30:30 every Saturday
+  Alarm.alarmRepeat(dowTuesday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);  // 8:30:30 every Saturday
+  /* Alarm.alarmRepeat(dowSaturday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);  // 8:30:30 every Saturday */
 
   // Supplemental lightning for providing a bit more of growth
   Alarm.alarmRepeat(LIGHTONHOUR, LIGHTONMINUTE, 00, turnOnLights);    // 8:30:30 every Saturday
   Alarm.alarmRepeat(LIGHTOFFHOUR, LIGHTOFFMINUTE, 00, turnOffLights);  // 8:30:30 every Saturday
 
   // Photoperiodic lightning to cheaply increase day length.
-  Alarm.alarmRepeat(LIGHTOFFHOUR, LIGHTOFFMINUTE, 01, beginLightSequence);
+  Alarm.alarmRepeat(LIGHTOFFHOUR, LIGHTOFFMINUTE, 05, beginLightSequence);
 
 }
 
 void turnOnWaterAlarm(){
   // Instead of setting two alarms, set one and a timer.
-  debugPrint("Turning scheduled water on.");
+  Serial.println("Turning scheduled water on.");
   turnOnWater();
   Alarm.timerOnce(60*WATER_INTERVAL, turnOffWater);
 }
@@ -36,14 +38,14 @@ void turnOnWaterAlarm(){
 void beginLightSequence(){
   // The hours need to be doubled since our cycle of turning lights on and off takes thirty minutes.
   halfHoursLeft = PHOTOPERIODIC_HOURS*2;
-  debugPrint("Start Light Sequence for " + String(halfHoursLeft) + " 30 minute segments");
+  Serial.println("Start Light Sequence for " + String(halfHoursLeft) + " 30 minute segments");
   lightBlock();
 }
 
 void lightBlock(){
   // Begins a light sequence during N half hours
   if(halfHoursLeft != 0){
-    debugPrint("Begin lightblock #" + String(halfHoursLeft));
+    Serial.println("Begin lightblock #" + String(halfHoursLeft));
     Alarm.timerOnce(60*30, lightBlock);
     photoLightBlock();
     halfHoursLeft--;
@@ -74,7 +76,7 @@ String getTimeFromSerial() {
       continue;
     }
     // receive time in the shape, separated by :
-    //(int YYYY, byte MM, byte DD, byte hh, byte mm, byte ss
+    // TIME:YYYY:MM:DD:hh:mm:ss
     int tagsep = time.indexOf(":");
     debugPrint("Got time " + time.substring(tagsep+1));
     return time.substring(tagsep+1);
@@ -114,9 +116,11 @@ void beginTime() {
   // Call getTimeFromSerial every 5 minutes to sync time
   debugPrint("Setting alarm timers.");
   if(DEBUG){
-    setTime(23,59,55,26,1,2022);
+    setTime(6,59,55,7,2,2022);
   }
   else{
+    //setTime(LIGHTOFFHOUR,LIGHTOFFMINUTE,0,7,2,2022);
+    setTime(getTime_TFromSerial());
     setSyncProvider(getTime_TFromSerial);
     setSyncInterval(60 * TIMESYNC_INTERVAL);
   }

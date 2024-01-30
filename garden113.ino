@@ -8,34 +8,26 @@
 #include <Time.h>
 #include <TimeAlarms.h>
 
-#define DEBUG true
+#define DEBUG false
 
 #define SLOW 0
 #define STEADY 1
 #define BLINKSPEED_SLOW 500
 #define BLINKSPEED_STEADY 1000
-#define TIMESYNC_INTERVAL 5 // in minutes TODO RESET TO 1
+#define TIMESYNC_INTERVAL 43200 // a month in minutes
 
 #define LIGHTPIN 2
 #define WATERPIN 10
 
-/* #define WATERHOUR 8 */
-/* #define WATERMINUTE 30 */
-/* #define LIGHTONHOUR 18 */
-/* #define LIGHTONMINUTE 30 */
-/* #define LIGHTOFFHOUR 1 */
-/* #define LIGHTOFFMINUTE 00 */
+#define WATERHOUR 8
+#define WATERMINUTE 30
+#define WATER_INTERVAL 12  // in minutes (max 29)
+#define LIGHTONHOUR 18
+#define LIGHTONMINUTE 30
+#define LIGHTOFFHOUR 20
+#define LIGHTOFFMINUTE 00
 
-#define WATERHOUR 0
-#define WATERMINUTE 0
-/* #define WATER_INTERVAL 5  // in minutes (max 29) */
-#define WATER_INTERVAL 1  // in minutes (max 29)
-
-#define LIGHTONHOUR 0
-#define LIGHTONMINUTE 0
-#define LIGHTOFFHOUR 0
-#define LIGHTOFFMINUTE 1
-#define PHOTOPERIODIC_HOURS 5
+#define PHOTOPERIODIC_HOURS 4
 
 // Incoming serial message
 bool lights = false;
@@ -122,17 +114,18 @@ void turnOffWater() {
 bool autoRoutine() {
   // This is a function checked on every second.
   // It'll just turn on/off pins according to state. Other functions modify state.
+  // for some reason, the states are inverted in the relays
 
   if (lights) {
-    digitalWrite(LIGHTPIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+    digitalWrite(LIGHTPIN, LOW);
   } else {
-    digitalWrite(LIGHTPIN, LOW);  // turn the LED on (HIGH is the voltage level)
+    digitalWrite(LIGHTPIN, HIGH);
   }
 
   if (water) {
-    digitalWrite(WATERPIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+    digitalWrite(WATERPIN, LOW);
   } else {
-    digitalWrite(WATERPIN, LOW);  // turn the LED on (HIGH is the voltage level)
+    digitalWrite(WATERPIN, HIGH);
   }
   return false;
 }

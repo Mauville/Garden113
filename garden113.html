@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!--[if IE]><meta http-equiv="X-UA-Compatible" content="IE=edge"><![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Asciidoctor 1.5.8">
+<link rel="icon" type="image/" href="$favicon">
+<title>Untitled</title>
+<style>
+
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<style>
+  .click .title { color: blue; }
+  .click {margin-top: 0.5em; margin-bottom: 0.5em;}
+  .openblock { margin-top: 1em; margin-bottom: 1em; }
+  .openblock>.box>.content { margin-top:1em;margin-bottom: 1em;margin-left:3em;margin-right:4em; }
+</style>
+
+
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+
+<script>
+
+
+
+var ready2;
+
+ready2 = function() {
+
+    $(document).ready(function(){
+
+        $('.openblock.click').click( function()  { $(this).find('.content').slideToggle('200'); } )
+        $('.openblock.click').find('.content').hide()
+
+
+        $('.listingblock.click').click( function()  { $(this).find('.content').slideToggle('200') }  )
+        $('.listingblock.click').find('.content').hide()
+
+    });
+
+}
+
+
+
+
+$(document).ready(ready2);
+$(document).on('page:load', ready2);
+
+
+</script>
+
+</head>
+
+
+<body class="article">
+<div id="header">
+</div>
+<div id="content">
+<div class="paragraph">
+<p>#define SLOW 0
+#define STEADY 1
+#define BLINKSPEED_SLOW 1000
+#define BLINKSPEED_STEADY 200</p>
+</div>
+<div class="paragraph">
+<p>String message;
+bool lights = false;
+bool water = true;
+bool manual = false;
+bool autoON = true;</p>
+</div>
+<div class="paragraph">
+<p>void setup() {
+  Serial.begin(9600);
+  // Flash onboard LED
+  pinMode(LED_BUILTIN, OUTPUT);
+  // set mode to automatic
+}</p>
+</div>
+<div class="paragraph">
+<p>void loop() {
+  blink(SLOW);
+  // Print Status line
+  printStatus();
+  if(autoON){
+    autoRoutine();
+  }
+}</p>
+</div>
+<div class="paragraph">
+<p>void serialEvent() {
+  // Read and echo back messages
+  message = "";
+  message = Serial.readString();
+  // Handle COMMANDs
+  if (message.startsWith("COMMAND:")) {
+    Serial.println("ACK");
+    blink(STEADY);
+    // Pass sliced string
+    if (handleCommand(message.substring(9))) {
+      Serial.println("SUCCESS");
+    } else {
+      Serial.println("FAILURE");
+    }
+  }
+  else{
+        Serial.println(message + " from Arduino!");
+        blink(STEADY);
+  }</p>
+</div>
+<div class="paragraph">
+<p>}</p>
+</div>
+<div class="paragraph">
+<p>bool handleCommand(String command) {
+  // parse a response of the shape AUTO LIGHTS WATER.
+  // This response will be:
+  // 3 leave as is
+  // 0  turn off
+  // 1  turn on
+  int a = int(command.charAt(0));
+  int l = int(command.charAt(1));
+  int w = int(command.charAt(2));
+  if (manual){
+    if (l == 1){
+      turnOnLights();
+    }
+    if (l == 2){
+      turnOffLights();
+    }
+    if (w == 1){
+      turnOnWater();
+    }
+    if (w == 2){
+      turnOffWater();
+    }
+  }
+}</p>
+</div>
+<div class="paragraph">
+<p>void turnOnLights(){
+  Serial.println("Turned Lights ON");
+  lights = true;
+}
+void turnOffLights(){
+  Serial.println("Turned Lights OFF");
+  lights = false;
+}
+void turnOnWater(){
+  Serial.println("Turned Water ON");
+  lights = true;
+}
+void turnOffWater(){
+  Serial.println("Turned Water OFF");
+  lights = false;
+}</p>
+</div>
+<div class="paragraph">
+<p>void autoRoutine(){
+  // in here go auto things
+  // This is a function checked on every second.
+  // Since we don&#8217;t have threads, this function needs to execute for as short as possible to avoid locking up the program
+  // perhaps only ifs that turn on and off when time is inside a range
+  // lights on 1 hour from sunset
+    // 19:08:27 on 03
+    // 19:17:06 on 04
+    // 19:28:41 on 05
+    // 19:40:48 on 06
+    // 19:26:30 on 08
+  // lights on 10 minutes every 20 minutes for 4 hours</p>
+</div>
+<div class="literalblock">
+<div class="content">
+<pre>// water on every three (?) days at 8am</pre>
+</div>
+</div>
+<div class="paragraph">
+<p>}
+void printStatus() {
+  Serial.print("LIGHT: " + String(lights) + ",");
+  Serial.print("WATER: " + String(water) + ",");
+  Serial.print("OVERRIDE: " + String(manual));
+  Serial.println();
+}
+void blink(int speed) {
+  (speed == SLOW) ? speed = BLINKSPEED_SLOW : speed = BLINKSPEED_STEADY;
+  digitalWrite(LED_BUILTIN, HIGH);  // turn the LED on (HIGH is the voltage level)
+  delay(speed);                     // wait for a second
+  digitalWrite(LED_BUILTIN, LOW);   // turn the LED off by making the voltage LOW
+  delay(speed);
+}</p>
+</div>
+</div>
+<div id="footer">
+<div id="footer-text">
+Last updated 2022-01-16 23:13:05 -0600
+</div>
+</div>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/styles/foundation.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/9.13.1/highlight.min.js"></script>
+<script>hljs.initHighlighting()</script>
+<script type="text/x-mathjax-config">
+MathJax.Hub.Config({
+  messageStyle: "none",
+  tex2jax: {
+    inlineMath: [["\\(", "\\)"]],
+    displayMath: [["\\[", "\\]"]],
+    ignoreClass: "nostem|nolatexmath"
+  },
+  asciimath2jax: {
+    delimiters: [["\\$", "\\$"]],
+    ignoreClass: "nostem|noasciimath"
+  },
+  TeX: { extensions: ["mhchem.js"] }
+});
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-MML-AM_HTMLorMML"></script>
+</body>
+</html>
