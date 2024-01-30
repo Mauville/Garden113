@@ -7,8 +7,11 @@
   ***/
 #include <Time.h>
 #include <TimeAlarms.h>
+#include <RtcDS1302.h>
 
-#define DEBUG false
+#define DEBUG true
+#define RTC_TIME_ENABLED true
+
 
 #define SLOW 0
 #define STEADY 1
@@ -17,8 +20,16 @@
 #define TIMESYNC_INTERVAL 43200 // a month in minutes
 
 #define LIGHTPIN 2
-#define WATERPIN 10
+#define WATERPIN 3
+#define RTC_CLK 9
+#define RTC_DAT 8
+#define RTC_RES 7
 
+// Whether to water every N days, or a set of defined days at certain times
+#define WATER_ON_INTERVALS true
+#define WATER_EVERY_N_DAYS 4
+// Whether to spread out watering even more on rain season
+#define SUMMER_WATER_ADJUST true
 #define WATERHOUR 8
 #define WATERMINUTE 30
 #define WATER_INTERVAL 12  // in minutes (max 29)
@@ -28,6 +39,10 @@
 #define LIGHTOFFMINUTE 00
 
 #define PHOTOPERIODIC_HOURS 4
+
+ThreeWire RTCWire(RTC_DAT,RTC_CLK,RTC_RES); // IO, SCLK, CE
+RtcDS1302<ThreeWire> Rtc(RTCWire);
+
 
 // Incoming serial message
 bool lights = false;
@@ -75,6 +90,7 @@ void debugPrint(String s) {
 
 void setup() {
   Serial.begin(9600);
+  Rtc.Begin();
   // setup flashing onboard LED
   pinMode(LED_BUILTIN, OUTPUT);
   pinMode(LIGHTPIN, OUTPUT);

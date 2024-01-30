@@ -3,6 +3,7 @@
 int halfHoursLeft = PHOTOPERIODIC_HOURS*2;
 
 void setAlarms() {
+  debugPrint("Setting alarm timers.");
   // lights on 10 minutes every 20 minutes for 4 hours
   // Minus one hour
   // Sunsets in CDMX
@@ -13,10 +14,18 @@ void setAlarms() {
   // 19:26:30 on 08
   // water on every three (?) days at 8am
 
-  // set water on alarms
-  //Alarm.alarmRepeat(dowMonday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);    // 8:30:30 every Saturday
-  Alarm.alarmRepeat(dowTuesday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);  // 8:30:30 every Saturday
-  /* Alarm.alarmRepeat(dowSaturday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);  // 8:30:30 every Saturday */
+  if(WATER_ON_INTERVALS){
+    // Rain season is from May to September
+    bool isRainSeason = Rtc.GetDateTime().Month() > 3 && Rtc.GetDateTime().Month() < 8;
+    int adjustment = SUMMER_WATER_ADJUST && isRainSeason ? 2 : 0;
+    Alarm.timerOnce((WATER_EVERY_N_DAYS + adjustment) * 24 * 60 *60, turnOnWaterAlarm);
+  }
+  else{
+    // set water on alarms
+    //Alarm.alarmRepeat(dowMonday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);    // 8:30:30 every Saturday
+    Alarm.alarmRepeat(dowTuesday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);  // 8:30:30 every Saturday
+    /* Alarm.alarmRepeat(dowSaturday, WATERHOUR, WATERMINUTE, 01, turnOnWaterAlarm);  // 8:30:30 every Saturday */
+  }
 
   // Supplemental lightning for providing a bit more of growth
   Alarm.alarmRepeat(LIGHTONHOUR, LIGHTONMINUTE, 00, turnOnLights);    // 8:30:30 every Saturday
@@ -110,19 +119,54 @@ time_t getTime_TFromSerial() {
   byte second = (byte)time.substring(17).toInt();
   return tmConvert_t(year, month, day, hour, minute, second);
 }
+uint32_t getTime_TFromCompileTime() {
+    return RtcDateTime(__DATE__, __TIME__).Unix32Time();
+}
+
+String RTC2String(const RtcDateTime dt)
+{
+    char datestring[26];
+
+    snprintf_P(datestring,
+            countof(datestring),
+            PSTR("%02u/%02u/%04u %02u:%02u:%02u"),
+            dt.Month(),
+            dt.Day(),
+            dt.Year(),
+            dt.Hour(),
+            dt.Minute(),
+            dt.Second() );
+    return datestring;
+}
 
 void beginTime() {
-  debugPrint("Setting time for the first time:");
   // Call getTimeFromSerial every 5 minutes to sync time
-  debugPrint("Setting alarm timers.");
-  if(DEBUG){
-    setTime(6,59,55,7,2,2022);
+  if(RTC_TIME_ENABLED){
+    debugPrint("RTC is Enabled");
+
+    // Check if there's time set
+    if (Rtc.IsDateTimeValid() && Rtc.GetDateTime().Year() > 2023 && Rtc.GetDateTime().Year() < 2040)
+    {
+      debugPrint("Got valid time from RTC:");
+      debugPrint(RTC2String(Rtc.GetDateTime()));
+    }
+    else{
+      debugPrint("RTC has lost confidence");
+      debugPrint("Setting RTC to compilation time:");
+      uint32_t getTime_TFromCompileTime(); // initialize it how ever you want
+      RtcDateTime rtcNow;
+      rtcNow.InitWithUnix32Time(now);
+      Rtc.SetDateTime(rtcNow);
+    }
+      // Set timealarms time
+      setTime(Rtc.GetDateTime().Unix32Time());
+      setSyncProvider(getTime_TFromCompileTime);
+      debugPrint("Sucessfully set TimeAlarms time from RTC");
   }
   else{
-    //setTime(LIGHTOFFHOUR,LIGHTOFFMINUTE,0,7,2,2022);
     setTime(getTime_TFromSerial());
     setSyncProvider(getTime_TFromSerial);
-    setSyncInterval(60 * TIMESYNC_INTERVAL);
   }
+  setSyncInterval(60 * TIMESYNC_INTERVAL);
 
 }
