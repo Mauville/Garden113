@@ -21,6 +21,8 @@
 
 #define LIGHTPIN 2
 #define WATERPIN 3
+#define PUMPPIN 4
+
 #define RTC_CLK 9
 #define RTC_DAT 8
 #define RTC_RES 7
@@ -140,8 +142,10 @@ bool autoRoutine() {
 
   if (water) {
     digitalWrite(WATERPIN, LOW);
+    digitalWrite(PUMPPIN, LOW);
   } else {
     digitalWrite(WATERPIN, HIGH);
+    digitalWrite(PUMPPIN, HIGH);
   }
   return false;
 }

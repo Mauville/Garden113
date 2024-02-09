@@ -15,10 +15,7 @@ void setAlarms() {
   // water on every three (?) days at 8am
 
   if(WATER_ON_INTERVALS){
-    // Rain season is from May to September
-    bool isRainSeason = Rtc.GetDateTime().Month() > 3 && Rtc.GetDateTime().Month() < 8;
-    int adjustment = SUMMER_WATER_ADJUST && isRainSeason ? 2 : 0;
-    Alarm.timerOnce((WATER_EVERY_N_DAYS + adjustment) * 24 * 60 *60, turnOnWaterAlarm);
+    setWaterOnIntervalAlarm();
   }
   else{
     // set water on alarms
@@ -36,11 +33,22 @@ void setAlarms() {
 
 }
 
+void setWaterOnIntervalAlarm(){
+    // Sets an alarm using day intervals, instead of the default "once every X"
+    // Rain season is from May to September
+    bool isRainSeason = Rtc.GetDateTime().Month() > 3 && Rtc.GetDateTime().Month() < 8;
+    int adjustment = SUMMER_WATER_ADJUST && isRainSeason ? 2 : 0;
+    Alarm.timerOnce((WATER_EVERY_N_DAYS + adjustment) * 24 * 60 *60, turnOnWaterAlarm);
+}
+
 void turnOnWaterAlarm(){
-  // Instead of setting two alarms, set one and a timer.
   Serial.println("Turning scheduled water on.");
   turnOnWater();
   Alarm.timerOnce(60*WATER_INTERVAL, turnOffWater);
+  if (WATER_ON_INTERVALS){
+    // Replace the old alarm with a new one to water again.
+    setWaterOnIntervalAlarm();
+  }
 }
 
 
